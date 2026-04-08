@@ -1,7 +1,7 @@
 # Multi-Cloud Disaster Recovery Architecture
 ### AWS + Azure + GCP | Active-Active & Active-Passive DR
 
-[![DR Failover Tests](https://github.com/yourusername/multi-cloud-dr/actions/workflows/dr-test.yml/badge.svg)](https://github.com/yourusername/multi-cloud-dr/actions)
+[![DR Failover Tests](https://github.com/Akshith34/multi-cloud-dr/actions/workflows/dr-test.yml/badge.svg)](https://github.com/Akshith34/multi-cloud-dr/actions)
 [![Terraform](https://img.shields.io/badge/Terraform-1.6+-623CE4?logo=terraform)](https://terraform.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
