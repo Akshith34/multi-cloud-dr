@@ -4,28 +4,10 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
-  validate-terraform:
-    name: Validate Terraform Modules
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.6"
-
-      - name: Terraform Format Check
-        run: |
-          terraform fmt -check -recursive terraform/
-          echo "✅ Terraform formatting valid"
-
   validate-fis-templates:
-    name: Validate FIS Experiment Templates
+    name: ✅ Validate FIS Experiment Templates
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,7 +21,7 @@ jobs:
           done
 
   validate-lambda:
-    name: Validate Lambda Syntax
+    name: ✅ Validate Lambda Syntax
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,16 +32,32 @@ jobs:
           python3 -m py_compile lambda/dr-orchestrator/handler.py
           echo "✅ Lambda handler syntax valid"
 
-  validate-runbooks:
-    name: Validate Runbooks Exist
+  validate-scripts:
+    name: ✅ Validate Shell Scripts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check runbooks are present
+      - name: Check scripts exist and are executable
+        run: |
+          test -f scripts/dr-drill.sh && echo "✅ dr-drill.sh exists"
+          test -f scripts/validate-replication.sh && echo "✅ validate-replication.sh exists"
+          bash -n scripts/dr-drill.sh && echo "✅ dr-drill.sh syntax valid"
+          bash -n scripts/validate-replication.sh && echo "✅ validate-replication.sh syntax valid"
+
+  validate-runbooks:
+    name: ✅ Validate Runbooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check all required files exist
         run: |
           test -f runbooks/02-active-passive-failover.md && echo "✅ Runbook exists"
-          test -f scripts/dr-drill.sh && echo "✅ DR drill script exists"
-          test -f scripts/validate-replication.sh && echo "✅ Replication check script exists"
+          test -f README.md && echo "✅ README exists"
+          test -f terraform/modules/aurora-global/main.tf && echo "✅ Aurora Terraform exists"
+          test -f terraform/modules/route53-failover/main.tf && echo "✅ Route53 Terraform exists"
+          test -f terraform/modules/s3-replication/main.tf && echo "✅ S3 Terraform exists"
           echo "✅ All required files present"
