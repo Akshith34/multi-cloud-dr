@@ -1,0 +1,7 @@
+aws_account_id        = "123456789012"
+primary_region        = "us-east-1"
+dr_region             = "us-west-2"
+domain_name           = "app.yourdomain.com"
+hosted_zone_id        = "Z1234567890ABC"
+dr_mode               = "active-passive"
+aurora_instance_class = "db.r6g.xlarge"

@@ -1,0 +1,115 @@
+{
+  "_comment": "AWS FIS Experiment Template — Simulates full AZ failure in us-east-1",
+  "_description": "Terminates EC2 instances in a single AZ, injects RDS failover, and measures DR response time. Used to validate automated DR orchestration and Route 53 failover timing.",
+
+  "description": "Multi-AZ failure simulation — validate DR orchestration and Route 53 failover",
+  "stopConditions": [
+    {
+      "source": "aws:cloudwatch:alarm",
+      "value": "arn:aws:cloudwatch:us-east-1:ACCOUNT_ID:alarm/fis-stop-condition-critical-error"
+    }
+  ],
+  "roleArn": "arn:aws:iam::ACCOUNT_ID:role/fis-experiment-role",
+  "tags": {
+    "Name": "az-failure-dr-validation",
+    "Environment": "non-production",
+    "Purpose": "DR Testing",
+    "ManagedBy": "FIS"
+  },
+  "actions": {
+    "terminate-ec2-instances-az-a": {
+      "actionId": "aws:ec2:terminate-instances",
+      "description": "Terminate all EC2 instances tagged dr-test=true in us-east-1a",
+      "parameters": {},
+      "targets": {
+        "Instances": "ec2-instances-az-a"
+      }
+    },
+    "inject-aurora-failover": {
+      "actionId": "aws:rds:failover-db-cluster",
+      "description": "Force Aurora cluster failover to secondary AZ",
+      "parameters": {},
+      "targets": {
+        "Clusters": "aurora-primary-cluster"
+      },
+      "startAfter": ["terminate-ec2-instances-az-a"]
+    },
+    "wait-for-dr-stabilization": {
+      "actionId": "aws:fis:wait",
+      "description": "Wait 5 minutes for DR systems to stabilize",
+      "parameters": {
+        "duration": "PT5M"
+      },
+      "startAfter": ["inject-aurora-failover"]
+    },
+    "validate-traffic-routing": {
+      "actionId": "aws:ssm:send-command",
+      "description": "Run validation script via SSM on surviving instances",
+      "parameters": {
+        "documentArn": "arn:aws:ssm:us-east-1:ACCOUNT_ID:document/DR-Validation-Script",
+        "documentVersion": "$DEFAULT",
+        "duration": "PT3M"
+      },
+      "targets": {
+        "Instances": "ec2-instances-remaining"
+      },
+      "startAfter": ["wait-for-dr-stabilization"]
+    }
+  },
+  "targets": {
+    "ec2-instances-az-a": {
+      "resourceType": "aws:ec2:instance",
+      "resourceTags": {
+        "dr-test": "true",
+        "Environment": "staging"
+      },
+      "filters": [
+        {
+          "path": "Placement.AvailabilityZone",
+          "values": ["us-east-1a"]
+        },
+        {
+          "path": "State.Name",
+          "values": ["running"]
+        }
+      ],
+      "selectionMode": "ALL"
+    },
+    "aurora-primary-cluster": {
+      "resourceType": "aws:rds:cluster",
+      "resourceTags": {
+        "Name": "prod-aurora-global-primary",
+        "dr-test": "true"
+      },
+      "selectionMode": "ALL"
+    },
+    "ec2-instances-remaining": {
+      "resourceType": "aws:ec2:instance",
+      "resourceTags": {
+        "dr-test": "true",
+        "Environment": "staging"
+      },
+      "filters": [
+        {
+          "path": "Placement.AvailabilityZone",
+          "values": ["us-east-1b", "us-east-1c"]
+        },
+        {
+          "path": "State.Name",
+          "values": ["running"]
+        }
+      ],
+      "selectionMode": "ALL"
+    }
+  },
+  "logConfiguration": {
+    "cloudWatchLogsConfiguration": {
+      "logGroupArn": "arn:aws:logs:us-east-1:ACCOUNT_ID:log-group:/fis/dr-experiments:*"
+    },
+    "s3Configuration": {
+      "bucketName": "myapp-dr-audit-logs",
+      "prefix": "fis-experiments/az-failure/"
+    },
+    "logSchemaVersion": 2
+  }
+}
