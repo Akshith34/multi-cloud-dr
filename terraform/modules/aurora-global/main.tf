@@ -72,11 +72,11 @@ resource "aws_rds_cluster" "primary" {
   master_username = var.master_username
   master_password = var.master_password
 
-  backup_retention_period   = var.backup_retention_days
-  preferred_backup_window   = "03:00-04:00"
+  backup_retention_period      = var.backup_retention_days
+  preferred_backup_window      = "03:00-04:00"
   preferred_maintenance_window = "sun:05:00-sun:06:00"
 
-  storage_encrypted = true
+  storage_encrypted   = true
   deletion_protection = true
 
   enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
