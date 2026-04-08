@@ -1,6 +1,10 @@
 name: DR Failover Tests
 
 on:
+  push:
+    branches:
+      - main
+
   # Weekly scheduled DR drill — every Sunday at 2am UTC
   schedule:
     - cron: "0 2 * * 0"
